@@ -1,16 +1,21 @@
 import sqlite3
-from PyQt5 import QtWidgets, uic
+from PyQt5 import QtWidgets
 import sys
+from UI.main_ui import Ui_MainWindow
+from UI.add_edit_coffee_form_ui import Ui_dialog
 
 
-class CoffeeApp(QtWidgets.QMainWindow):
+class CoffeeApp(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(CoffeeApp, self).__init__()
-        uic.loadUi('main.ui', self)
+        self.setupUi(self)
         self.setWindowTitle("Капучино")
+        
+        # Подключаем кнопки к функциям
         self.queryButton.clicked.connect(self.load_data)
         self.addButton.clicked.connect(self.open_add_edit_form)
         self.editButton.clicked.connect(self.open_add_edit_form)
+        
         self.coffeeTable.setColumnCount(7)
         self.coffeeTable.setHorizontalHeaderLabels(['ID', 'Название сорта', 'Степень обжарки', 'Молотый/в зернах', 'Описание вкуса', 'Цена', 'Объем упаковки'])
         self.coffeeTable.setRowCount(0)
@@ -22,16 +27,14 @@ class CoffeeApp(QtWidgets.QMainWindow):
 
         self.load_data()
 
-
     def open_add_edit_form(self):
         button = self.sender()
         add_mode = button == self.addButton
         dialog = AddEditCoffeeForm(add_mode, self)
         dialog.exec_()
 
-        
     def load_data(self):
-        con = sqlite3.connect('coffee.sqlite')
+        con = sqlite3.connect('data/coffee.sqlite')
         cur = con.cursor()
         cur.execute('SELECT * FROM coffee')
         rows = cur.fetchall()
@@ -47,10 +50,10 @@ class CoffeeApp(QtWidgets.QMainWindow):
         con.close()
 
 
-class AddEditCoffeeForm(QtWidgets.QDialog):
+class AddEditCoffeeForm(QtWidgets.QDialog, Ui_dialog):
     def __init__(self, add_mode, parent=None):
         super(AddEditCoffeeForm, self).__init__(parent)
-        uic.loadUi('addEditCoffeeForm.ui', self)
+        self.setupUi(self)
         
         self.add_mode = add_mode
         self.parent = parent
@@ -72,7 +75,6 @@ class AddEditCoffeeForm(QtWidgets.QDialog):
         self.saveButton.clicked.connect(self.save_data)
 
     def save_data(self):
-        
         name = self.nameEdit.text()
         roast_degree = self.roastDegreeEdit.text()
         ground_or_beans = self.groundOrBeansEdit.text()
@@ -80,8 +82,9 @@ class AddEditCoffeeForm(QtWidgets.QDialog):
         price = self.priceEdit.value()
         package_size = self.packageSizeEdit.text()
 
-        con = sqlite3.connect('coffee.sqlite')
+        con = sqlite3.connect('data/coffee.sqlite')
         cur = con.cursor()
+        
         if self.add_mode:
             cur.execute('INSERT INTO coffee (name, roast_degree, ground_or_beans, description, price, package_size) VALUES (?, ?, ?, ?, ?, ?)',
                            (name, roast_degree, ground_or_beans, description, price, package_size))
@@ -96,7 +99,9 @@ class AddEditCoffeeForm(QtWidgets.QDialog):
         self.close()
 
 
+
 app = QtWidgets.QApplication(sys.argv)
 window = CoffeeApp()
 window.show()
 sys.exit(app.exec_())
+
